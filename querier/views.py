@@ -13,7 +13,9 @@ def make_query(sql_query):
                                          { 'headers': [col[0] for col in cursor.description],
                                            'rows': cursor.fetchall() })
     except DatabaseError as exc:
-        output_string = "<span><p>Invalid query:<br /><code>{}</code></p><p><b>{}</b></span></p>".format(sql_query, exc[1])
+        output_string = render_to_string('error_page.html', 
+                                         { 'query': sql_query,
+                                           'message': exc[1] })
     return output_string
 
 
