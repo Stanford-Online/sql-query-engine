@@ -12,15 +12,18 @@ def make_query(sql_query):
         output_string = render_to_string('query_result.html', 
                                          { 'headers': [col[0] for col in cursor.description],
                                            'rows': cursor.fetchall() })
+        success = True
     except DatabaseError as exc:
         output_string = render_to_string('error_page.html', 
                                          { 'query': sql_query,
                                            'message': exc[1] })
-    return output_string
+        success = False
+    return (success, output_string)
 
 
 def query(request):
-    return HttpResponse(make_query(request.GET.get('query','')))
+    success, output = make_query(request.GET.get('query', ''))
+    return HttpResponse(output)
 
 
 @csrf_exempt
@@ -29,9 +32,9 @@ def xqueue_interface(request):
         content = json.loads(request.body)
         body = json.loads(content['xqueue_body'])
         student_response = body['student_response']
-        query_output = make_query(student_response)
-        response_dict = {'correct': True,
-                         'score': 1,
+        success, query_output = make_query(student_response)
+        response_dict = {'correct': success,
+                         'score': 1 if success else 0,
                          'msg': query_output}
         return HttpResponse(json.dumps(response_dict))
     except (ValueError, KeyError):
